@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Hydra's Wheel</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <div class="logo-wrapper">
+                <h1>Hydra's Wheel</h1>
+                <span class="tagline">Premium Random Picker</span>
+            </div>
+            <div class="header-right">
+                <button id="home-btn" class="nav-button">
+                    <span class="material-symbols-rounded">home</span>
+                </button>
+                <button id="settings-btn" class="nav-button">
+                    <span class="material-symbols-rounded">settings</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="settings-container">
+                <h2>Settings</h2>
+                
+                <!-- Column 1: General Settings -->
+                <div class="settings-section">
+                    <h3>General Settings</h3>
+                    <div class="settings-group">
+                        <label class="setting-item">
+                            <span class="setting-icon material-symbols-rounded">volume_up</span>
+                            <span class="setting-label">Sound Effects</span>
+                            <input type="checkbox" id="sound-enabled" checked>
+                            <span class="checkmark"></span>
+                        </label>
+                        <label class="setting-item">
+                            <span class="setting-icon material-symbols-rounded">save</span>
+                            <span class="setting-label">Auto Save</span>
+                            <input type="checkbox" id="auto-save" checked>
+                            <span class="checkmark"></span>
+                        </label>
+                        <label class="setting-item">
+                            <span class="setting-icon material-symbols-rounded">palette</span>
+                            <span class="setting-label">Dark Mode</span>
+                            <input type="checkbox" id="dark-mode">
+                            <span class="checkmark"></span>
+                        </label>
+                        <div class="setting-item">
+                            <span class="setting-icon material-symbols-rounded">speed</span>
+                            <span class="setting-label">Spin Duration</span>
+                            <input type="range" id="spin-duration" min="1" max="30" step="1" value="5">
+                            <span class="setting-value" id="spin-duration-value">5s</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Column 2: Prize List -->
+                <section class="settings-section">
+                    <h3>Prize List</h3>
+                    <div class="prizes-list-container">
+                        <div class="prizes-header">
+                            Prize List
+                            <span class="prize-count">0/10 prizes</span>
+                        </div>
+                        <div class="prizes-grid">
+                            <!-- Prizes will be dynamically inserted here -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Players Section (Full Width) -->
+                <div class="settings-section players-section">
+                    <h3>Players List</h3>
+                    <div class="players-list-container">
+                        <div id="players-list" class="players-list">
+                            <!-- Players will be dynamically added here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Player Modal -->
+    <div id="player-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Player</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <label for="player-name">Name:</label>
+                    <input type="text" id="player-name" placeholder="Enter player name">
+                </div>
+                <div class="input-group">
+                    <label for="player-image">Image URL (optional):</label>
+                    <input type="text" id="player-image" placeholder="Enter image URL">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="save-player" class="primary-button">Save</button>
+                <button class="secondary-button close-modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="theme.js"></script>
+    <script src="settings.js"></script>
+</body>
+</html>
