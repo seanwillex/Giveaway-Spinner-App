@@ -31,18 +31,24 @@
                 <div class="wheel-section">
                     <div class="wheel-container">
                         <div class="pointer">▼</div>
-                        <canvas id="wheel" width="650" height="650"></canvas>
+                        <canvas id="wheel" width="660" height="660"></canvas>
                         <button id="spin-btn">SPIN</button>
                     </div>
                 </div>
                 
-                <div class="winners-panel">
-                    <div class="winners-header">
-                        <h2>Recent Winners</h2>
-                        <button class="clear-winners-btn" onclick="wheel.clearWinners()">Clear List</button>
-                    </div>
-                    <div class="winners-list" id="winners-list">
-                        <!-- Winners will be dynamically added here -->
+                <div class="controls-panel">
+                    <div class="panel-section wheel-settings">
+                        <div class="section-header">
+                            <h2>Recent Winners</h2>
+                            <button id="clear-winners-btn" class="clear-btn" title="Clear Winners List">
+                                <span class="material-symbols-rounded">delete</span>
+                            </button>
+                        </div>
+                        <div class="winners-list-container">
+                            <div class="winners-list" id="winners-list">
+                                <!-- Winners will be added here dynamically -->
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -52,9 +58,18 @@
     <!-- Result Modal -->
     <div id="result-modal" class="modal">
         <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <h2>Result</h2>
-            <p id="result-text"></p>
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span class="modal-icon material-symbols-rounded">celebration</span>
+                    <h2>Winner Announcement!</h2>
+                </div>
+                <button class="close-button" title="Close">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="result-text"></div>
+            </div>
         </div>
     </div>
     
