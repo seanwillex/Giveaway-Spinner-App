@@ -14,6 +14,7 @@ class WheelApp {
         this.homeBtn = document.getElementById('home-btn');
         this.settingsBtn = document.getElementById('settings-btn');
         this.winnersList = document.getElementById('winners-list');
+        this.clearWinnersBtn = document.getElementById('clear-winners-btn');
         
         // Modal elements
         this.modal = document.getElementById('result-modal');
@@ -101,6 +102,20 @@ class WheelApp {
             });
         }
 
+        // Clear winners button
+        if (this.clearWinnersBtn) {
+            this.clearWinnersBtn.addEventListener('click', () => {
+                if (this.winners.length === 0) {
+                    return;
+                }
+                if (confirm('Are you sure you want to clear the winners list?')) {
+                    this.winners = [];
+                    this.saveWinners();
+                    this.renderWinners();
+                }
+            });
+        }
+
         // Window resize
         window.addEventListener('resize', () => {
             this.handleResize();
@@ -181,129 +196,112 @@ class WheelApp {
     spin() {
         if (this.isSpinning) return;
         
-        const options = this.loadOptions();
-        if (!options || options.length === 0) {
-            alert('Please add some prizes in the settings first!');
+        console.log('Spinning wheel...');
+        
+        // Make sure we have options to spin
+        if (!this.options || this.options.length < 2) {
+            alert('Please add at least 2 prizes to spin the wheel!');
             return;
         }
-
-        // Load and check players
-        this.loadPlayers();
-        if (!this.players || this.players.length === 0) {
-            alert('Please add players in the settings first!');
-            return;
-        }
+        
+        this.selectedPlayer = this.selectRandomPlayer();
+        if (!this.selectedPlayer) return;
 
         this.isSpinning = true;
-        this.spinBtn.disabled = true;
+        const spinDuration = 5000; // 5 seconds
+        
+        const startAngle = this.rotation;
+        const minSpins = 5; // Minimum number of full rotations
+        const maxSpins = 10; // Maximum number of full rotations
+        const spins = minSpins + Math.random() * (maxSpins - minSpins);
+        const targetAngle = startAngle + (spins * Math.PI * 2) + this.calculateTargetAngle();
+        
+        this.animate(startAngle, targetAngle, spinDuration, () => {
+            this.isSpinning = false;
+            this.showResult();
+            this.celebrateWinner();
+        });
+    }
 
-        // Select a random player
-        const randomPlayerIndex = Math.floor(Math.random() * this.players.length);
-        const selectedPlayer = this.players[randomPlayerIndex];
+    calculateTargetAngle() {
+        const targetIndex = Math.floor(Math.random() * this.options.length);
+        return (targetIndex * (Math.PI * 2 / this.options.length));
+    }
 
-        // Calculate random stop angle
-        const stopAngle = Math.random() * Math.PI * 2;
-        const rounds = 4; // Number of full rotations
-        const spinDuration = 5000; // Duration in milliseconds
-        const startRotation = this.rotation;
-        const totalRotation = (Math.PI * 2 * rounds) + stopAngle;
+    animate(startAngle, targetAngle, duration, callback) {
         const startTime = performance.now();
-
+        
         const animate = (currentTime) => {
             const elapsed = currentTime - startTime;
-            const progress = Math.min(elapsed / spinDuration, 1);
+            const progress = Math.min(elapsed / duration, 1);
             
             // Easing function for smooth deceleration
-            const easeOut = t => 1 - Math.pow(1 - t, 3);
-            const currentRotation = startRotation + (totalRotation * easeOut(progress));
+            const easeOut = (t) => 1 - Math.pow(1 - t, 3);
             
-            this.rotation = currentRotation;
+            // Calculate current rotation
+            this.rotation = startAngle + (targetAngle - startAngle) * easeOut(progress);
+            
+            // Draw the wheel
             this.drawWheel();
-
+            
             if (progress < 1) {
                 requestAnimationFrame(animate);
             } else {
-                this.isSpinning = false;
-                this.spinBtn.disabled = false;
-                
-                // Calculate winner
-                const winningIndex = Math.floor(((currentRotation % (Math.PI * 2)) / (Math.PI * 2)) * this.options.length);
-                const prize = this.options[winningIndex];
-                
-                // Use the selected player's name
-                this.handleWin(selectedPlayer, prize);
+                if (callback) callback();
             }
         };
-
+        
         requestAnimationFrame(animate);
     }
 
-    handleWin(winner, prize) {
-        // Add confetti effect
+    showResult() {
+        const winningOption = this.getSelectedSegment();
+        if (this.modalText) {
+            this.modalText.innerHTML = `
+                <div class="winner-info">
+                    <div class="congratulations">CONGRATULATIONS</div>
+                    <div class="winner-player">${this.selectedPlayer}</div>
+                    <div class="winner-prize">You have won:</div>
+                    <div class="winner-option">${winningOption}</div>
+                </div>
+            `;
+        }
+        if (this.modal) {
+            this.modal.style.display = 'flex';
+            // Trigger reflow to ensure transition works
+            this.modal.offsetHeight;
+            this.modal.classList.add('show');
+        }
+        
+        // Add to winners list
+        this.addWinner(this.selectedPlayer, winningOption);
+    }
+
+    getSelectedSegment() {
+        let currentRotation = this.rotation % (2 * Math.PI);
+        if (currentRotation < 0) {
+            currentRotation += 2 * Math.PI;
+        }
+        
+        const segmentAngle = (2 * Math.PI) / this.options.length;
+        // Adjust the rotation to align with the pointer at top (subtract PI/2)
+        const adjustedRotation = (2 * Math.PI - currentRotation - Math.PI/2) % (2 * Math.PI);
+        const index = Math.floor(adjustedRotation / segmentAngle);
+        
+        // Ensure the index is within bounds
+        return this.options[((index % this.options.length) + this.options.length) % this.options.length];
+    }
+
+    celebrateWinner() {
         confetti({
             particleCount: 100,
             spread: 70,
             origin: { y: 0.6 }
         });
-
-        // Add to winners list
-        this.addWinner(winner, prize);
-
-        // Show modal with result
-        this.showModal(`
-            <div class="winner-modal-content">
-                <div class="winner-modal-player"> ${winner}</div>
-                <div class="winner-modal-text">Congratulations! You've Won</div>
-                <div class="winner-modal-prize">${prize}</div>
-            </div>
-        `);
-    }
-
-    loadWinners() {
-        const savedWinners = localStorage.getItem('winners');
-        this.winners = savedWinners ? JSON.parse(savedWinners) : [];
-    }
-
-    saveWinners() {
-        localStorage.setItem('winners', JSON.stringify(this.winners));
-    }
-
-    addWinner(winner, prize) {
-        const timestamp = new Date().toLocaleString();
-        this.winners.unshift({ winner, prize, timestamp });
-        this.saveWinners();
-        this.renderWinners();
-    }
-
-    clearWinners() {
-        this.winners = [];
-        localStorage.removeItem('winners');
-        document.querySelector('.winners-list').innerHTML = '';
-    }
-
-    renderWinners() {
-        if (!this.winnersList) return;
-
-        this.winnersList.innerHTML = '';
-        
-        this.winners.forEach((winner, index) => {
-            const winnerElement = document.createElement('div');
-            winnerElement.className = 'winner-item';
-            winnerElement.innerHTML = `
-                <div class="winner-number">${index + 1}</div>
-                <div class="winner-info">
-                    <div class="winner-name">${winner.winner}</div>
-                    <div class="winner-timestamp">${winner.timestamp}</div>
-                </div>
-                <div class="winner-prize" title="${winner.prize}">${winner.prize}</div>
-            `;
-            this.winnersList.appendChild(winnerElement);
-        });
     }
 
     loadPlayers() {
-        const savedPlayers = localStorage.getItem('players');
-        this.players = savedPlayers ? JSON.parse(savedPlayers) : [];
+        this.players = JSON.parse(localStorage.getItem('players')) || [];
     }
 
     selectRandomPlayer() {
@@ -315,21 +313,76 @@ class WheelApp {
         return this.players[randomIndex];
     }
 
+    addWinner(player, prize) {
+        const now = new Date();
+        const winner = {
+            player,
+            prize,
+            timestamp: now.toISOString(),
+            id: Date.now()
+        };
+        
+        this.winners.unshift(winner);
+        if (this.winners.length > 50) {
+            this.winners.pop();
+        }
+        
+        this.saveWinners();
+        this.renderWinners();
+    }
+
+    loadWinners() {
+        const saved = localStorage.getItem('wheelWinners');
+        this.winners = saved ? JSON.parse(saved) : [];
+    }
+
+    saveWinners() {
+        localStorage.setItem('wheelWinners', JSON.stringify(this.winners));
+    }
+
+    renderWinners() {
+        if (!this.winnersList) return;
+
+        this.winnersList.innerHTML = '';
+        
+        if (this.winners.length === 0) {
+            this.winnersList.innerHTML = `
+                <div class="winner-entry">
+                    <div class="winner-icon">🎯</div>
+                    <div class="winner-details">
+                        <div class="winner-name">No winners yet</div>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        this.winners.forEach((winner, index) => {
+            const winnerElement = document.createElement('div');
+            winnerElement.className = 'winner-entry' + (index === 0 ? ' new' : '');
+            winnerElement.innerHTML = `
+                <div class="winner-icon">${index === 0 ? '🏆' : '🎯'}</div>
+                <div class="winner-details">
+                    <div class="winner-name">${winner.player}</div>
+                    <div class="winner-prize">${winner.prize}</div>
+                </div>
+            `;
+            
+            this.winnersList.appendChild(winnerElement);
+        });
+    }
+
     loadOptions() {
         return JSON.parse(localStorage.getItem('wheelOptions')) || [];
     }
 
     closeModal() {
-        this.modal.style.display = 'none';
-    }
-
-    showModal(message) {
-        if (this.modalText) {
-            this.modalText.innerHTML = message;
-        }
-        if (this.modal) {
-            this.modal.style.display = 'flex';
-        }
+        if (!this.modal) return;
+        
+        this.modal.classList.remove('show');
+        setTimeout(() => {
+            this.modal.style.display = 'none';
+        }, 300); // Match the transition duration
     }
 }
 
