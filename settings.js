@@ -4,9 +4,16 @@ class SettingsPage {
         this.loadSettings();
         this.setupEventListeners();
         this.players = [];
+        this.currentSlots = 20; // Initial number of slots to show
         this.loadPlayers();
         this.renderPlayers();
         this.initializePrizes();
+
+        // Listen for player removal events from the wheel
+        document.addEventListener('playerRemoved', (event) => {
+            this.loadPlayers(); // Reload the players list
+            this.renderPlayers(); // Re-render the players grid
+        });
     }
 
     initializeElements() {
@@ -74,7 +81,8 @@ class SettingsPage {
 
     updatePlayerCount() {
         if (this.playerCount) {
-            this.playerCount.textContent = `${this.players.length}/30 Players`;
+            const remainingSlots = 30 - this.players.length;
+            this.playerCount.textContent = `${this.players.length}/30 Players (${remainingSlots} slots available)`;
         }
     }
 
@@ -82,10 +90,10 @@ class SettingsPage {
         if (!this.playersList) return;
         
         this.playersList.innerHTML = '';
-        const totalSlots = 30; // 6 columns × 5 rows
+        const playersToShow = this.players.slice(0, this.currentSlots);
 
         // Render existing players
-        this.players.forEach((player, index) => {
+        playersToShow.forEach((player, index) => {
             const playerElement = document.createElement('div');
             playerElement.className = 'player-item';
             playerElement.innerHTML = `
@@ -100,11 +108,18 @@ class SettingsPage {
                     </button>
                 </div>
             `;
+
+            // Add event listeners for edit and delete buttons
+            const editBtn = playerElement.querySelector('.edit-btn');
+            const deleteBtn = playerElement.querySelector('.delete-btn');
+            editBtn.addEventListener('click', () => this.editPlayer(index));
+            deleteBtn.addEventListener('click', () => this.deletePlayer(index));
+
             this.playersList.appendChild(playerElement);
         });
 
-        // Add empty slots to fill the grid
-        const emptySlots = totalSlots - this.players.length;
+        // Add empty slots to complete the grid
+        const emptySlots = this.currentSlots - playersToShow.length;
         for (let i = 0; i < emptySlots; i++) {
             const emptySlot = document.createElement('div');
             emptySlot.className = 'player-item empty';
@@ -115,6 +130,22 @@ class SettingsPage {
                 }
             });
             this.playersList.appendChild(emptySlot);
+        }
+
+        // Add "More" button if we haven't reached the maximum slots
+        if (this.currentSlots < 30) {
+            const moreButtonContainer = document.createElement('div');
+            moreButtonContainer.className = 'more-button-container';
+
+            const moreButton = document.createElement('button');
+            moreButton.className = 'more-players-btn';
+            moreButton.textContent = 'Show More Slots';
+            moreButton.onclick = () => {
+                this.currentSlots = Math.min(this.currentSlots + 20, 30); // Add 20 more slots, up to max 30
+                this.renderPlayers();
+            };
+            moreButtonContainer.appendChild(moreButton);
+            this.playersList.appendChild(moreButtonContainer);
         }
     }
 
@@ -142,7 +173,7 @@ class SettingsPage {
     }
 
     deletePlayer(index) {
-        if (confirm('Are you sure you want to remove this player?')) {
+        if (confirm('Are you sure you want to delete this player?')) {
             this.players.splice(index, 1);
             this.savePlayers();
             this.renderPlayers();
