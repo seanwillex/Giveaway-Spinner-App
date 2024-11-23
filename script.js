@@ -75,6 +75,14 @@ class WheelApp {
         // Spin button
         if (this.spinBtn) {
             this.spinBtn.addEventListener('click', () => {
+                if (this.players.length === 0) {
+                    alert('Please add players before spinning the wheel!');
+                    return;
+                }
+                if (this.options.length === 0) {
+                    alert('Please add prizes before spinning the wheel!');
+                    return;
+                }
                 console.log('Spin button clicked');
                 this.spin();
             });
@@ -321,6 +329,20 @@ class WheelApp {
             timestamp: now.toISOString(),
             id: Date.now()
         };
+        
+        // Remove the winner from the players list
+        const playerIndex = this.players.indexOf(player);
+        if (playerIndex !== -1) {
+            this.players.splice(playerIndex, 1);
+            localStorage.setItem('players', JSON.stringify(this.players));
+            
+            // Update the settings page if it exists
+            const settingsPage = document.querySelector('.settings-page');
+            if (settingsPage) {
+                const event = new CustomEvent('playerRemoved', { detail: { player } });
+                document.dispatchEvent(event);
+            }
+        }
         
         this.winners.unshift(winner);
         if (this.winners.length > 50) {
